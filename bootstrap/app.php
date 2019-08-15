@@ -64,6 +64,7 @@ $app->singleton(
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
     'authAdministrator' => App\Http\Middleware\AuthenticateAdministrator::class,
+    'sanitizePath' => App\Http\Middleware\SanitizePath::class,
     'https' => App\Http\Middleware\HttpsProtocol::class,
     'cors' => App\Http\Middleware\Cors::class
 ]);

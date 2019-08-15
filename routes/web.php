@@ -12,7 +12,7 @@
 */
 
 /** @var $router Laravel\Lumen\Routing\Router */
-$router->group(['prefix' => '/v1', 'middleware' => ['https', 'cors']], static function () use ($router) {
+$router->group(['prefix' => '/v1', 'middleware' => ['sanitizePath', 'https', 'cors']], static function () use ($router) {
 
     //Users Endpoint
     $router->get('/users[/{id}]', ['middleware' => 'authAdministrator', 'uses' => 'UsersController@get']);
