@@ -32,6 +32,7 @@ class Measurement extends Model implements AuthenticatableContract, Authorizable
      * @var array
      */
     protected $hidden = [
-        'updated_at'
+        'updated_at',
+        'is_active'
     ];
 }

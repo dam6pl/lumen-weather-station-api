@@ -10,6 +10,15 @@ use Illuminate\Support\Str;
 class UsersController extends Controller
 {
     /**
+     * UsersController constructor.
+     */
+    public function __construct()
+    {
+        $this->middleware('authAdministrator');
+    }
+
+
+    /**
      * @param Request  $request
      * @param int|null $id
      *
@@ -17,7 +26,7 @@ class UsersController extends Controller
      */
     public function get(Request $request, int $id = null): JsonResponse
     {
-        $user = $id === null ? User::where('is_active', 1)->get() : User::find($id);
+        $user = $id === null ? 'all' : User::find($id)->where('is_active', 1);
 
         if ($user === null) {
             return response()->json(
@@ -32,11 +41,33 @@ class UsersController extends Controller
             );
         }
 
+        if ($user === 'all') {
+            $paginate = $request['per_page'] ?? 15;
+            $single = User::where('is_active', 1)
+                ->orderBy('created_at', 'desc')
+                ->paginate((int)$paginate)->toArray();
+
+            $user = $single['data'];
+            $paginationData = [
+                'pagination' => [
+                    'results'      => (int)$single['total'],
+                    'per_page'     => (int)$single['per_page'],
+                    'current_page' => (int)$single['current_page'],
+                    'last_page'    => (int)$single['last_page']
+                ]
+            ];
+        } else {
+            $user = $user->toArray();
+        }
+
         return response()->json(
-            [
-                'success' => true,
-                'data'    => $user->toArray()
-            ]
+            \array_merge(
+                [
+                    'success' => true,
+                    'data'    => $user
+                ],
+                $paginationData ?? []
+            )
         );
     }
 
@@ -51,15 +82,15 @@ class UsersController extends Controller
         $errors = $data = [];
 
         foreach (['name'] as $field) {
-            if ($request[$field] === null) {
+            if ($request->input($field) === null) {
                 $errors[] = $field;
             } else {
-                $data[$field] = (string)$request[$field];
+                $data[$field] = (string)$request->input($field);
             }
         }
 
         foreach (['login', 'password'] as $field) {
-            $data[$field] = (string)$request[$field];
+            $data[$field] = (string)$request->input($field);
         }
 
         if (\count($errors) !== 0) {

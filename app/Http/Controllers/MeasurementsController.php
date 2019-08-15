@@ -10,6 +10,15 @@ use Illuminate\Http\Request;
 class MeasurementsController extends Controller
 {
     /**
+     * MeasurementsController constructor.
+     */
+    public function __construct()
+    {
+        $this->middleware('auth', ['only' => ['create']]);
+        $this->middleware('authAdministrator', ['only' => ['delete']]);
+    }
+
+    /**
      * @param Request  $request
      * @param int|null $id
      *
@@ -17,7 +26,7 @@ class MeasurementsController extends Controller
      */
     public function get(Request $request, int $id = null): JsonResponse
     {
-        $measurement = $id === null ? 'all' : Measurement::find($id);
+        $measurement = $id === null ? 'all' : Measurement::find($id)->where('is_active', 1);
 
         if ($measurement === null) {
             return response()->json(
@@ -34,7 +43,7 @@ class MeasurementsController extends Controller
 
         if ($measurement === 'all') {
             $paginate = $request['per_page'] ?? 15;
-            $single = Measurement::paginate((int)$paginate)->toArray();
+            $single = Measurement::orderBy('created_at', 'desc')->paginate((int)$paginate)->toArray();
 
             $measurement = $single['data'];
             $paginationData = [
@@ -71,15 +80,15 @@ class MeasurementsController extends Controller
         $errors = $data = [];
 
         foreach (['station_id'] as $field) {
-            if ($request[$field] === null) {
+            if ($request->input($field) === null) {
                 $errors[] = $field;
             } else {
-                $data[$field] = (string)$request[$field];
+                $data[$field] = $request->input($field);
             }
         }
 
         foreach (['temperature', 'pressure', 'humidity', 'illuminance'] as $field) {
-            $data[$field] = (string)$request[$field] ?: null;
+            $data[$field] = $request->input($field) ?: null;
         }
 
         if (\count($errors) !== 0) {
@@ -95,7 +104,6 @@ class MeasurementsController extends Controller
                 400
             );
         }
-
 
         if (Station::find($data['station_id']) === null) {
             return response()->json(
@@ -160,11 +168,28 @@ class MeasurementsController extends Controller
      */
     public function getByStation(Request $request, int $id): JsonResponse
     {
-        return response()->json(
-            [
-                'success' => true,
-                'data'    => Measurement::where('station_id', $id)->get()->toArray()
+        $paginate = $request['per_page'] ?? 15;
+        $single = Measurement::where('station_id', $id)->orderBy('created_at', 'desc')->paginate((int)$paginate)->toArray();
+
+        $measurement = $single['data'];
+        $paginationData = [
+            'pagination' => [
+                'results'      => (int)$single['total'],
+                'per_page'     => (int)$single['per_page'],
+                'current_page' => (int)$single['current_page'],
+                'last_page'    => (int)$single['last_page']
             ]
+        ];
+
+        return response()->json(
+            \array_merge(
+                [
+                    'success' => true,
+                    'data'    => $measurement
+                ],
+                $paginationData ?? []
+            )
         );
+
     }
 }

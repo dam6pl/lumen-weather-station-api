@@ -12,23 +12,24 @@
 */
 
 /** @var $router Laravel\Lumen\Routing\Router */
+$router->post('/proxy', ['middleware' => ['https', 'cors'], 'uses' => 'ProxyController@resolvePost']);
+
 $router->group(['prefix' => '/v1', 'middleware' => ['https', 'cors']], static function () use ($router) {
 
     //Users Endpoint
-    $router->get('/users[/{id}]', ['middleware' => 'authAdministrator', 'uses' => 'UsersController@get']);
-    $router->get('/users/{id}/token', ['middleware' => 'authAdministrator', 'uses' => 'UsersController@getToken']);
-    $router->post('/users[/{id}]', ['middleware' => 'authAdministrator', 'uses' => 'UsersController@create']);
-    $router->delete('/users/{id}', ['middleware' => 'authAdministrator', 'uses' => 'UsersController@delete']);
+    $router->get('/users[/{id}]', ['uses' => 'UsersController@get']);
+    $router->get('/users/{id}/token', ['uses' => 'UsersController@getToken']);
+    $router->post('/users[/{id}]', ['uses' => 'UsersController@create']);
+    $router->delete('/users/{id}', ['uses' => 'UsersController@delete']);
 
     //Stations Endpoint
     $router->get('/stations[/{id}]', ['uses' => 'StationsController@get']);
     $router->get('/stations/{id}/measurements', ['uses' => 'StationsController@getMeasurements']);
-    $router->post('/stations[/{id}]', ['middleware' => 'authAdministrator', 'uses' => 'StationsController@create']);
-    $router->delete('/stations/{id}', ['middleware' => 'authAdministrator', 'uses' => 'StationsController@delete']);
+    $router->post('/stations[/{id}]', ['uses' => 'StationsController@create']);
+    $router->delete('/stations/{id}', ['uses' => 'StationsController@delete']);
 
     //Measurements Endpoint
     $router->get('/measurements[/{id}]', ['uses' => 'MeasurementsController@get']);
-    $router->post('/measurements[/{id}]', ['middleware' => 'auth', 'uses' => 'MeasurementsController@create']);
-    $router->post('\/measurements[/{id}]', ['middleware' => 'auth', 'uses' => 'MeasurementsController@create']);
-    $router->delete('/measurements/{id}', ['middleware' => 'authAdministrator', 'uses' => 'MeasurementsController@delete']);
+    $router->post('/measurements[/{id}]', ['uses' => 'MeasurementsController@create']);
+    $router->delete('/measurements/{id}', ['uses' => 'MeasurementsController@delete']);
 });

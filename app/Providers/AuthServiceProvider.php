@@ -35,7 +35,7 @@ class AuthServiceProvider extends ServiceProvider
                 $request->user = User::where('token', $request->input('token'))->first();
                 return $request->user;
             } elseif ($request->header('X-Token-Auth')) {
-                $request->user = User::where('token', $request->header('token'))->first();
+                $request->user = User::where('token', $request->header('X-Token-Auth'))->first();
                 return $request->user;
             }
         });
