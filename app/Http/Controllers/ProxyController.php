@@ -39,8 +39,7 @@ class ProxyController extends Controller
             );
         }
 
-
-
+        var_dump($data['endpoint'], \str_replace('\/', '/', $data['endpoint']));
         $req = Request::create(\str_replace('\/', '/', $data['endpoint']), 'POST', $request->input());
         $req->headers->set('X-Token-Auth', $request->header('X-Token-Auth'));
         $res = app()->handle($req);
