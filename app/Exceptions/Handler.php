@@ -50,7 +50,7 @@ class Handler extends ExceptionHandler
         $parent = parent::render($request, $exception);
 
         if (\getenv('APP_ENV') === 'local') {
-            echo $request->fullUrl();
+            return $request->fullUrl();
             return $parent;
         }
 
