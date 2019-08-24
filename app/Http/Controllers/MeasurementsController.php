@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Measurement;
 use App\Station;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MeasurementsController extends Controller
 {
@@ -43,7 +45,7 @@ class MeasurementsController extends Controller
 
         if ($measurement === 'all') {
             $paginate = $request['per_page'] ?? 15;
-            $single = Measurement::orderBy('created_at', 'desc')->paginate((int)$paginate)->toArray();
+            $single = $this->getMeasurementsStats($request)->paginate($paginate)->toArray();
 
             $measurement = $single['data'];
             $paginationData = [
@@ -55,7 +57,7 @@ class MeasurementsController extends Controller
                 ]
             ];
         } else {
-            $measurement = $measurement->toArray();
+            $measurement = $measurement->first()->toArray();
         }
 
         return response()->json(
@@ -169,7 +171,10 @@ class MeasurementsController extends Controller
     public function getByStation(Request $request, int $id): JsonResponse
     {
         $paginate = $request['per_page'] ?? 15;
-        $single = Measurement::where('station_id', $id)->orderBy('created_at', 'desc')->paginate((int)$paginate)->toArray();
+        $single = $this->getMeasurementsStats($request)
+            ->where('station_id', $id)
+            ->paginate($paginate)
+            ->toArray();
 
         $measurement = $single['data'];
         $paginationData = [
@@ -190,6 +195,50 @@ class MeasurementsController extends Controller
                 $paginationData ?? []
             )
         );
+    }
 
+    /**
+     * @param Request $request
+     *
+     * @return Builder
+     */
+    private function getMeasurementsStats(Request $request): Builder
+    {
+        $fromDate = $request['from'] ?? '1970-01-01 00:00:00';
+        $interval = $request['interval'] ?? null;
+
+        $interval = \in_array($interval, ['hourly', 'daily', 'monthly']) ? $interval : null;
+
+        if ($interval !== null) {
+            switch ($interval) {
+                case 'hourly':
+                    $results = Measurement::select(
+                        DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d %H:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
+                    )
+                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                        ->groupBy(DB::raw('HOUR(created_at), DAY(created_at), MONTH(created_at), YEAR(created_at)'));
+                    break;
+                case 'daily':
+                    $results = Measurement::select(
+                        DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
+                    )
+                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                        ->groupBy(DB::raw('DAY(created_at), MONTH(created_at), YEAR(created_at)'));
+                    break;
+                case 'monthly':
+                    $results = Measurement::select(
+                        DB::raw('DATE_FORMAT(LAST_DAY(created_at), "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
+                    )
+                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                        ->groupBy(DB::raw('MONTH(created_at), YEAR(created_at)'));
+                    break;
+                default:
+                    $results = Measurement::where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)));
+            }
+        } else {
+            $results = Measurement::where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)));
+        }
+
+        return $results->orderBy('created_at', 'desc');
     }
 }

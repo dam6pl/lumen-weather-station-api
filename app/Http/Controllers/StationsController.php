@@ -55,7 +55,7 @@ class StationsController extends Controller
                 ]
             ];
         } else {
-            $station = $station->toArray();
+            $station = $station->first()->toArray();
         }
 
         return response()->json(

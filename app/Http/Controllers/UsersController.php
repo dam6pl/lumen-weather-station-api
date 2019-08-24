@@ -57,7 +57,7 @@ class UsersController extends Controller
                 ]
             ];
         } else {
-            $user = $user->toArray();
+            $user = $user->first()->toArray();
         }
 
         return response()->json(
