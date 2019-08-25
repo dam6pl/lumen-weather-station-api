@@ -2,6 +2,8 @@
 
 This is a RESTful API services for Weather station. Service has been written in Lumen 5.4 and using MySQL database.
 
+Service is avaliable on https://weather-station-api.herokuapp.com/.
+
 **Author:** [Damian Nowak](mailto:me@dnowak.dev)
 
 
