@@ -28,7 +28,7 @@ class MeasurementsController extends Controller
      */
     public function get(Request $request, int $id = null): JsonResponse
     {
-        $measurement = $id === null ? 'all' : Measurement::find($id)->where('is_active', 1);
+        $measurement = $id === null ? 'all' : Measurement::where('id', $id)->where('is_active', 1);
 
         if ($measurement === null) {
             return response()->json(
@@ -57,7 +57,22 @@ class MeasurementsController extends Controller
                 ]
             ];
         } else {
-            $measurement = $measurement->first()->toArray();
+            $results = $measurement->get()->toArray();
+
+            if (!isset($results[0])) {
+                return response()->json(
+                    [
+                        'success' => false,
+                        'error'   => [
+                            'message' => "Unrecognized station ID ({$id}).",
+                            'code'    => 'invalid_station_id_error'
+                        ]
+                    ],
+                    400
+                );
+            }
+
+            $measurement = $results[0];
         }
 
         return response()->json(

@@ -26,7 +26,7 @@ class UsersController extends Controller
      */
     public function get(Request $request, int $id = null): JsonResponse
     {
-        $user = $id === null ? 'all' : User::find($id)->where('is_active', 1);
+        $user = $id === null ? 'all' : User::where('id', $id)->where('is_active', 1);
 
         if ($user === null) {
             return response()->json(
@@ -57,7 +57,22 @@ class UsersController extends Controller
                 ]
             ];
         } else {
-            $user = $user->first()->toArray();
+            $results = $user->get()->toArray();
+
+            if (!isset($results[0])) {
+                return response()->json(
+                    [
+                        'success' => false,
+                        'error'   => [
+                            'message' => "Unrecognized station ID ({$id}).",
+                            'code'    => 'invalid_station_id_error'
+                        ]
+                    ],
+                    400
+                );
+            }
+
+            $user = $results[0];
         }
 
         return response()->json(

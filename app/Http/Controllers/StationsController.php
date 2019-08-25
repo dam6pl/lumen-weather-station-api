@@ -24,7 +24,7 @@ class StationsController extends Controller
      */
     public function get(Request $request, int $id = null): JsonResponse
     {
-        $station = $id === null ? 'all' : Station::find($id)->where('is_active', 1);
+        $station = $id === null ? 'all' : Station::where('id', $id)->where('is_active', 1);
 
         if ($station === null) {
             return response()->json(
@@ -42,7 +42,7 @@ class StationsController extends Controller
         if ($station === 'all') {
             $paginate = $request['per_page'] ?? 15;
             $single = Station::where('is_active', 1)
-                ->orderBy('created_at', 'desc')
+                ->orderBy('created_at', 'asc')
                 ->paginate((int)$paginate)->toArray();
 
             $station = $single['data'];
@@ -55,7 +55,22 @@ class StationsController extends Controller
                 ]
             ];
         } else {
-            $station = $station->first()->toArray();
+            $results = $station->get()->toArray();
+
+            if (!isset($results[0])) {
+                return response()->json(
+                    [
+                        'success' => false,
+                        'error'   => [
+                            'message' => "Unrecognized station ID ({$id}).",
+                            'code'    => 'invalid_station_id_error'
+                        ]
+                    ],
+                    400
+                );
+            }
+
+            $station = $results[0];
         }
 
         return response()->json(
