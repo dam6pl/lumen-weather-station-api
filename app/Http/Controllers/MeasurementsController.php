@@ -249,7 +249,7 @@ class MeasurementsController extends Controller
                     )
                         ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
                         ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
-                        ->groupBy(DB::raw('WEEK(created_at, 1), MONTH(created_at), MONTH(created_at), YEAR(created_at)'));
+                        ->groupBy(DB::raw('WEEK(created_at, 1), MONTH(created_at), YEAR(created_at)'));
                     break;
                 case 'monthly':
                     $results = Measurement::select(
