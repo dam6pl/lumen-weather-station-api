@@ -223,49 +223,34 @@ class MeasurementsController extends Controller
         $toDate = $request['to'] ?? date('Y-m-d H:i:s');
         $interval = $request['interval'] ?? null;
 
-        $interval = \in_array($interval, ['hourly', 'daily', 'monthly']) ? $interval : null;
-
-        if ($interval !== null) {
-            switch ($interval) {
-                case 'hourly':
-                    $results = Measurement::select(
-                        DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d %H:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
-                    )
-                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
-                        ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
-                        ->groupBy(DB::raw('HOUR(created_at), DAY(created_at), MONTH(created_at), YEAR(created_at)'));
-                    break;
-                case 'daily':
-                    $results = Measurement::select(
-                        DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
-                    )
-                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
-                        ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
-                        ->groupBy(DB::raw('DAY(created_at), MONTH(created_at), YEAR(created_at)'));
-                    break;
-                case 'weekly':
-                    $results = Measurement::select(
-                        DB::raw('DATE_FORMAT(LAST_DAY(created_at), "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
-                    )
-                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
-                        ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
-                        ->groupBy(DB::raw('WEEK(created_at, 1), MONTH(created_at), YEAR(created_at)'));
-                    break;
-                case 'monthly':
-                    $results = Measurement::select(
-                        DB::raw('DATE_FORMAT(LAST_DAY(created_at), "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
-                    )
-                        ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
-                        ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
-                        ->groupBy(DB::raw('MONTH(created_at), MONTH(created_at), YEAR(created_at)'));
-                    break;
-                default:
-                    $results = Measurement::where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
-                        ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)));
-            }
-        } else {
-            $results = Measurement::where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
-                ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)));
+        switch ($interval) {
+            case 'hourly':
+                $results = Measurement::select(
+                    DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d %H:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
+                )
+                    ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                    ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
+                    ->groupBy(DB::raw('HOUR(created_at), DAY(created_at), MONTH(created_at), YEAR(created_at)'));
+                break;
+            case 'daily':
+                $results = Measurement::select(
+                    DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
+                )
+                    ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                    ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
+                    ->groupBy(DB::raw('DAY(created_at), MONTH(created_at), YEAR(created_at)'));
+                break;
+            case 'monthly':
+                $results = Measurement::select(
+                    DB::raw('DATE_FORMAT(LAST_DAY(created_at), "%Y-%m-%d 23:59:59") as created_at, ROUND(AVG(temperature), 2) as temperature, ROUND(AVG(pressure), 2) as pressure, ROUND(AVG(humidity), 2) as humidity, ROUND(AVG(illuminance), 2) as illuminance')
+                )
+                    ->where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                    ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)))
+                    ->groupBy(DB::raw('MONTH(created_at), MONTH(created_at), YEAR(created_at)'));
+                break;
+            default:
+                $results = Measurement::where('created_at', '>=', date('Y-m-d H:i:s', \strtotime($fromDate)))
+                    ->where('created_at', '<=', date('Y-m-d H:i:s', \strtotime($toDate)));
         }
 
         return $results->orderBy('created_at', 'desc');
